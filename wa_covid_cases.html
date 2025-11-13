@@ -1,221 +1,266 @@
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>WA COVID-19 Cases per 10k</title>
+    <!-- Mapbox GL JS -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet" />
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
-    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        /* Set the map container to fill the screen */
         #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
             width: 100%;
-            height: 80vh; 
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         /* Custom styles for the interactive elements */
-        .map-overlay {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 10;
-            max-width: 250px;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-            font-size: 0.875rem;
-        }
-        .color-box {
-            width: 20px;
-            height: 12px;
-            margin-right: 10px;
-            border-radius: 2px;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-        #county-info {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 10;
-            min-width: 250px; 
-            opacity: 0; 
-            transition: opacity 0.2s ease-in-out;
+        .mapboxgl-ctrl-bottom-right {
+            padding: 0.5rem;
         }
     </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
 </head>
-<body class="bg-gray-100 p-8">
+<body class="font-sans antialiased bg-gray-50">
 
-    <div class="max-w-6xl mx-auto">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">Washington State COVID-19 Cases per 10k Residents</h1>
-        <p class="text-gray-600 mb-6">Interactive choropleth map visualizing COVID-19 cumulative case rates by county.</p>
+    <!-- Map Container -->
+    <div id="map"></div>
 
-        <!-- Map Container -->
-        <div id='map'></div>
+    <!-- Title and Data Panel Overlay -->
+    <div class="absolute top-4 left-4 z-10 p-4 bg-white shadow-2xl rounded-xl max-w-xs md:max-w-md backdrop-blur-sm bg-opacity-90">
+        <h1 class="text-xl md:text-2xl font-extrabold text-gray-800">
+            WA COVID-19 Cases
+        </h1>
+        <p class="text-sm text-gray-500 mb-2">Cases per 10,000 residents (Oct 2021)</p>
 
-        <!-- Floating Info Box (Hover Data) -->
-        <div id="county-info">
-            <h3 class="font-bold text-lg text-emerald-700 mb-1" id="county-name">Hover over a county</h3>
-            <p class="text-sm text-gray-600">Cases/10k: <span id="cases-value" class="font-semibold text-gray-800">—</span></p>
-            <p class="text-sm text-gray-600">Deaths/10k: <span id="deaths-value" class="font-semibold text-gray-800">—</span></p>
-            <p class="text-sm text-gray-600">Fully Vax/10k: <span id="vax-value" class="font-semibold text-gray-800">—</span></p>
-            <p class="text-xs text-gray-500 mt-2">
-                *Data sources: NYT, WA DOH, WA OFM.
-            </p>
-        </div>
-
-        <!-- Legend Overlay -->
-        <div id="legend-overlay" class="map-overlay">
-            <h3 class="font-bold text-gray-800 mb-2 border-b pb-1">Cases per 10k</h3>
-            <div id="legend-content">
-                <!-- Legend items will be inserted here by JavaScript -->
+        <!-- Data Panel (Updated to include all three metrics) -->
+        <div id="data-panel" class="mt-3 p-3 border-l-4 border-emerald-500 bg-emerald-50 rounded-lg">
+            <p class="text-lg font-bold text-emerald-800" id="county-name">Hover over a county</p>
+            <div class="space-y-1 mt-2 text-sm">
+                <p class="text-gray-700">Cases/10k: <span id="case-value" class="font-semibold">N/A</span></p>
+                <p class="text-gray-700">Deaths/10k: <span id="death-value" class="font-semibold">N/A</span></p>
+                <p class="text-gray-700">Fully Vaxxed/10k: <span id="vax-value" class="font-semibold">N/A</span></p>
             </div>
         </div>
     </div>
 
-    <script>
-        // --- Configuration ---
-        // Your Mapbox Access Token
-        mapboxgl.accessToken = 'pk.eyJ1IjoiamFrb2J6aGFvIiwiYSI6ImNpcms2YWsyMzAwMmtmbG5icTFxZ3ZkdncifQ.P9MBej1xacybKcDN-jehvw';
-        
-        // **GeoJSON File Inclusion:** wa-covid-data-102521.geojson
-        const geoJsonPath = './assets/wa-covid-data-102521.geojson';
-        const dataProperty = 'casePer10k'; // Property used for the choropleth color fill
+    <!-- Legend Overlay -->
+    <div class="absolute bottom-4 left-4 z-10 p-3 bg-white shadow-2xl rounded-xl backdrop-blur-sm bg-opacity-90">
+        <h3 class="text-sm font-bold text-gray-700 mb-1 border-b pb-1">Case Rate (per 10k)</h3>
+        <div id="legend" class="space-y-1 text-xs">
+            <!-- Legend Items will be injected here by JavaScript -->
+        </div>
+    </div>
 
-        // COVID Cases per 10k bins and colors (Higher is Redder)
-        const caseStops = [
-            [0, '#fee0d2'],     
-            [700, '#fc9272'],   
-            [1000, '#de2d26'],  
-            [1500, '#a50f15'],  
-            [2000, '#67000d']   
-        ];
+    <script type="module">
+        // --- Mapbox Configuration ---
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZ2VtaW5pLWxpYiIsImEiOiJjbHU0ZWh2MWExODhvMmtwYW5lZTRqZmxrIn0.sHw6xQ-mE0v7JbW091S5Sg'; // Sample token
 
-        // --- Map Initialization ---
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/light-v10',
-            center: [-120.8, 47.3], // Center of Washington State
-            zoom: 6
+            style: 'mapbox://styles/mapbox/light-v11',
+            center: [-120.74, 47.75], // Centered on Washington State
+            zoom: 6,
+            minZoom: 5,
         });
 
+        // Data source path (relative to the HTML file)
+        const geoJsonPath = 'assets/wa-covid-data-102521.geojson';
+        const layerId = 'wa-covid-layer';
+        const sourceId = 'wa-covid-data';
+        const dataProperty = 'casePer10k';
+
+        // Define the color stops for the choropleth map
+        const colorStops = [
+            // [Value, Color]
+            [0, '#fef0d9'],    // < 1000 (Very low)
+            [1000, '#fdcc8a'], // 1000 - 1999 (Low)
+            [2000, '#fc8d59'], // 2000 - 2999 (Medium)
+            [3000, '#e34a33'], // 3000 - 3999 (High)
+            [4000, '#b30000']  // 4000+ (Very High)
+        ];
+
+        // --- Utility to update data panel ---
+        const countyNameElement = document.getElementById('county-name');
+        const caseValueElement = document.getElementById('case-value');
+        const deathValueElement = document.getElementById('death-value'); // NEW element
+        const vaxValueElement = document.getElementById('vax-value');     // NEW element
         let hoveredCountyId = null;
 
-        // Add a general Mapbox error handler to catch initialization issues
-        map.on('error', (e) => {
-            console.error('A Mapbox GL JS error occurred:', e.error);
-            document.getElementById('map').innerHTML = '<div class="flex items-center justify-center h-full text-red-600 font-bold">Map initialization error. Check console for details.</div>';
-        });
+        /**
+         * Updates the floating data panel with county information.
+         * @param {string} name - County name.
+         * @param {number|null} cases - The casePer10k value.
+         * @param {number|null} deaths - The deathPer10k value.
+         * @param {number|null} vax - The fullyVaxPer10k value.
+         */
+        function updateDataPanel(name, cases, deaths, vax) {
+            countyNameElement.textContent = name;
+            
+            // Cases and Vax are rounded to 0 decimal places
+            caseValueElement.textContent = cases !== null ? cases.toFixed(0) : 'N/A';
+            vaxValueElement.textContent = vax !== null ? vax.toFixed(0) : 'N/A';
+            
+            // Deaths are shown with 1 decimal place (can be low, e.g., 0.5)
+            deathValueElement.textContent = deaths !== null ? deaths.toFixed(1) : 'N/A';
+        }
 
-        // --- Core Map Logic ---
-        map.on('load', async () => {
-             console.log("Map loaded successfully. Attempting to fetch GeoJSON data...");
-            try {
-                // 1. Fetch GeoJSON Data
-                const response = await fetch(geoJsonPath);
-                 if (!response.ok) {
-                     throw new Error(`Failed to load GeoJSON: ${response.status} (${response.statusText}). Check if the file path '${geoJsonPath}' is correct.`);
+        // --- Legend Generation ---
+        function generateLegend() {
+            const legendDiv = document.getElementById('legend');
+            let legendHTML = '';
+
+            // Create labels for the stops
+            for (let i = 0; i < colorStops.length; i++) {
+                const [value, color] = colorStops[i];
+                let label;
+
+                if (i === 0) {
+                    label = `Less than ${colorStops[i+1][0]}`;
+                } else if (i === colorStops.length - 1) {
+                    label = `${value} +`;
+                } else {
+                    label = `${value} - ${colorStops[i+1][0] - 1}`;
                 }
-                const geojsonData = await response.json();
-                console.log("GeoJSON data loaded.");
 
-
-                // 2. Add Data Source (using 'county-data')
-                map.addSource('county-data', {
-                    type: 'geojson',
-                    data: geojsonData
-                });
-
-                // 3. Add Choropleth Layer (filled polygons)
-                map.addLayer({
-                    'id': 'county-fills',
-                    'type': 'fill',
-                    'source': 'county-data',
-                    'layout': {},
-                    'paint': {
-                        'fill-color': {
-                            property: dataProperty, // 'casePer10k' is used for color
-                            stops: caseStops
-                        },
-                        'fill-opacity': 0.8
-                    }
-                });
-
-                // 4. Add County Border Outline Layer
-                map.addLayer({
-                    'id': 'county-borders',
-                    'type': 'line',
-                    'source': 'county-data',
-                    'layout': {},
-                    'paint': {
-                        'line-color': '#fff',
-                        'line-width': 1
-                    }
-                });
-
-                // 5. Setup Legend
-                createLegend(caseStops);
-
-                // 6. Setup Interactivity (Hover)
-                setupHoverEffect();
-
-            } catch (error) {
-                // This catch handles errors from the fetch or data processing
-                console.error("Error loading or processing GeoJSON map data:", error.message || error);
-                document.getElementById('map').innerHTML = `<div class="flex items-center justify-center h-full text-red-600 font-bold">Error loading map data: ${error.message || 'Check console for details.'}</div>`;
+                legendHTML += `
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 rounded-sm" style="background-color: ${color};"></div>
+                        <span class="text-gray-700">${label}</span>
+                    </div>
+                `;
             }
-        });
 
-        // --- Interactivity Functions ---
+            legendDiv.innerHTML = legendHTML;
+        }
 
-        function setupHoverEffect() {
-            const countyInfo = document.getElementById('county-info');
+        // --- Map Initialization and Interactivity ---
+        map.on('load', () => {
+            generateLegend();
 
-            // Layer for hover effect (outline)
-            map.addLayer({
-                'id': 'county-highlight',
-                'type': 'line',
-                'source': 'county-data',
-                'paint': {
-                    'line-color': '#000000',
-                    'line-width': 3
-                },
-                'filter': ['==', 'name', ''] 
+            // 1. Add the GeoJSON data source
+            map.addSource(sourceId, {
+                type: 'geojson',
+                data: geoJsonPath
             });
 
-            // Handle mouse move event
-            map.on('mousemove', 'county-fills', (e) => {
-                const feature = e.features[0];
-                if (feature) {
-                    const countyName = feature.properties.name;
-                    // Extract all relevant attributes for the info box, ensuring they exist
-                    const caseRate = feature.properties.casePer10k !== undefined ? feature.properties.casePer10k.toFixed(0) : 'N/A'; 
-                    const deathRate = feature.properties.deathPer10k !== undefined ? feature.properties.deathPer10k.toFixed(1) : 'N/A';
-                    const vaxRate = feature.properties.fullyVaxPer10k !== undefined ? feature.properties.fullyVaxPer10k.toFixed(0) : 'N/A';
-
-                    if (hoveredCountyId !== countyName) {
-                        map.setFilter('county-highlight', ['==', 'name', countyName]);
-                        hoveredCountyId = countyName;
-                    }
-
-                    // Update Info Box with all three metrics
-                    countyInfo.style.opacity = 1;
-                    document.getElementById('county-name').textContent = countyName + " County";
-                    document.getElementById('cases-value').textContent = caseRate;
-                    document.getElementById('deaths-value').textContent = deathRate;
-                    document.getElementById('vax-value').textContent = vaxRate;
+            // 2. Add the choropleth layer
+            map.addLayer({
+                id: layerId,
+                type: 'fill',
+                source: sourceId,
+                paint: {
+                    // Use 'step' expression to assign colors based on casePer10k
+                    'fill-color': [
+                        'step',
+                        ['get', dataProperty],
+                        colorStops[0][1], // Default color for < 1000
+                        colorStops[1][0], colorStops[1][1],
+                        colorStops[2][0], colorStops[2][1],
+                        colorStops[3][0], colorStops[3][1],
+                        colorStops[4][0], colorStops[4][1]
+                    ],
+                    // Set fill-opacity for normal state
+                    'fill-opacity': [
+                        'case',
+                        ['boolean', ['feature-state', 'hover'], false],
+                        0.9, // Slightly higher opacity on hover
+                        0.8  // Normal opacity
+                    ],
+                    'fill-outline-color': '#fff'
                 }
             });
 
-            // Handle mouse leave event
-            map.on('mouseleave', 'county-fills
+            // 3. Add the hover effect layer (outline for visibility)
+            map.addLayer({
+                id: 'county-borders',
+                type: 'line',
+                source: sourceId,
+                paint: {
+                    'line-color': [
+                        'case',
+                        ['boolean', ['feature-state', 'hover'], false],
+                        '#000', // Black for hover
+                        '#bbb' // Light grey normally
+                    ],
+                    'line-width': [
+                        'case',
+                        ['boolean', ['feature-state', 'hover'], false],
+                        2,
+                        0.5
+                    ]
+                }
+            });
+            
+            // 4. Implement Hover Functionality
+
+            // Mouse move event
+            map.on('mousemove', layerId, (e) => {
+                if (e.features.length > 0) {
+                    const feature = e.features[0];
+                    const countyId = feature.id; // Assuming GeoJSON features have IDs
+                    const countyName = feature.properties.name;
+                    
+                    // Extract all three required data properties
+                    const caseValue = feature.properties.casePer10k;
+                    const deathValue = feature.properties.deathPer10k;
+                    const vaxValue = feature.properties.fullyVaxPer10k; // NEW PROPERTY
+
+                    // Only update if we've moved to a different feature
+                    if (hoveredCountyId !== countyId) {
+                        // Reset the hover state of the previous county
+                        if (hoveredCountyId !== null) {
+                            map.setFeatureState(
+                                { source: sourceId, id: hoveredCountyId },
+                                { hover: false }
+                            );
+                        }
+
+                        // Set the hover state of the new county
+                        hoveredCountyId = countyId;
+                        map.setFeatureState(
+                            { source: sourceId, id: hoveredCountyId },
+                            { hover: true }
+                        );
+                        
+                        // Update the data panel with all three values
+                        updateDataPanel(countyName, caseValue, deathValue, vaxValue);
+
+                        // Change cursor style
+                        map.getCanvas().style.cursor = 'pointer';
+                    }
+                }
+            });
+
+            // Mouse leave event
+            map.on('mouseleave', layerId, () => {
+                if (hoveredCountyId !== null) {
+                    // Clear the hover state on the map
+                    map.setFeatureState(
+                        { source: sourceId, id: hoveredCountyId },
+                        { hover: false }
+                    );
+                }
+                hoveredCountyId = null;
+                // Reset the data panel, passing null for all numeric fields
+                updateDataPanel('Hover over a county', null, null, null);
+                // Reset cursor style
+                map.getCanvas().style.cursor = '';
+            });
+
+        });
+    </script>
+</body>
+</html>
