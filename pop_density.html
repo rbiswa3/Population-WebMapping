@@ -139,8 +139,7 @@
             map.addSource(sourceId, {
                 type: 'geojson',
                 data: geoJsonPath,
-                // CRITICAL FIX: Tell Mapbox which property to use as the unique feature ID for state/feature state tracking.
-                // In your GeoJSON, the ID is stored in the 'id' field, which matches the feature ID.
+                // CRITICAL: Ensure Mapbox uses the 'id' field for feature state tracking
                 promoteId: 'id' 
             });
 
@@ -150,11 +149,10 @@
                 type: 'fill',
                 source: sourceId,
                 paint: {
-                    // Use 'step' expression to assign colors based on density
+                    // FIX: Use ['to-number', ...] to ensure the 'density' value is treated numerically for the step expression
                     'fill-color': [
                         'step',
-                        // Use ['get', dataProperty] to correctly access the 'density' value
-                        ['get', dataProperty], 
+                        ['to-number', ['get', dataProperty]], // *** THE CRITICAL FIX IS HERE ***
                         colorStops[0][1], // Default color for < 50
                         colorStops[1][0], colorStops[1][1],
                         colorStops[2][0], colorStops[2][1],
@@ -200,6 +198,7 @@
                     // Retrieve ID using feature.id now that we promoted it in the source config
                     const stateId = feature.id; 
                     const stateName = feature.properties.name;
+                    // The property value is still available on the feature properties object
                     const densityValue = feature.properties[dataProperty];
 
                     // Only update if we've moved to a different feature
