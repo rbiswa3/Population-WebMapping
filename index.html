@@ -2,60 +2,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lab 4: Interactive Web Mapping</title>
+    <title>Interactive Web Mapping Portfolio</title>
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        /* Custom styles for a slight gradient background and improved typography */
+        body {
+            background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+            min-height: 100vh;
+        }
     </style>
+    <script>
+        // Tailwind configuration for Inter font
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary-blue': '#1e40af',
+                        'secondary-green': '#059669',
+                    }
+                },
+            },
+        }
+    </script>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-4xl w-full bg-white shadow-xl rounded-xl p-8 md:p-12 border border-gray-100">
-        <header class="text-center mb-10">
-            <h1 class="text-4xl font-extrabold text-gray-900 mb-2">
-                GEOG 328: Lab 4
+<body class="font-sans antialiased text-gray-800 flex items-center justify-center p-4">
+
+    <!-- Main Content Container -->
+    <div class="w-full max-w-4xl bg-white shadow-2xl rounded-2xl p-6 md:p-10 border border-gray-100 mt-10 mb-10">
+
+        <!-- Header -->
+        <header class="text-center mb-10 border-b pb-5">
+            <h1 class="text-4xl font-extrabold text-primary-blue md:text-5xl">
+                Interactive Web Mapping Project
             </h1>
-            <p class="text-xl text-indigo-600 font-semibold">
-                Interactive Web Mapping Projects
+            <p class="mt-2 text-xl text-gray-500">
+                Choropleth Maps using Mapbox GL JS
             </p>
         </header>
 
-        <section class="space-y-6">
-            <p class="text-gray-700 leading-relaxed">
-                This repository contains the deliverables for Lab 4, featuring two choropleth maps with interactive hover capabilities built with Mapbox GL JS.
-            </p>
+        <!-- Map Navigation Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-            <div class="grid md:grid-cols-2 gap-6 pt-4">
-
-                <!-- Map 1: US Population Density -->
-                <div class="p-6 border border-indigo-200 rounded-lg bg-indigo-50 shadow-md transition duration-300 hover:shadow-lg hover:bg-indigo-100">
-                    <h2 class="text-2xl font-bold text-indigo-800 mb-3">
-                        U.S. Population Density Map
-                    </h2>
-                    <p class="text-gray-600 mb-4">
-                        A choropleth map visualizing population density across U.S. states using the **`stateData.geojson`** dataset.
-                    </p>
-                    <a href="pop_density.html" class="inline-flex items-center justify-center w-full px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-150">
-                        View Population Density Map
-                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                    </a>
-                </div>
-
-                <!-- Map 2: WA COVID-19 Data -->
-                <div class="p-6 border border-emerald-200 rounded-lg bg-emerald-50 shadow-md transition duration-300 hover:shadow-lg hover:bg-emerald-100">
-                    <h2 class="text-2xl font-bold text-emerald-800 mb-3">
-                        WA COVID-19 Cases Map
-                    </h2>
-                    <p class="text-gray-600 mb-4">
-                        A choropleth map visualizing COVID-19 Cases per 10,000 residents for Washington State counties.
-                    </p>
-                    <a href="wa_covid_cases.html" class="inline-flex items-center justify-center w-full px-5 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300 transition duration-150">
-                        View WA COVID Map
-                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                    </a>
-                </div>
-
+            <!-- Map 1: Population Density -->
+            <div class="map-card bg-indigo-50 p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:scale-[1.02]">
+                <h2 class="text-2xl font-bold mb-3 text-indigo-800 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    U.S. Population Density
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    An interactive choropleth map visualizing population density (people per square mile) across the United States states.
+                </p>
+                <!-- Link to the map file -->
+                <a href="pop_density.html" class="inline-flex items-center justify-center w-full md:w-auto px-6 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition duration-150">
+                    View Map
+                </a>
             </div>
+
+            <!-- Map 2: WA COVID-19 Data -->
+            <div class="map-card bg-red-50 p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:scale-[1.02]">
+                <h2 class="text-2xl font-bold mb-3 text-red-800 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    WA COVID-19 Cases
+                </h2>
+                <p class="text-gray-600 mb-4">
+                    An analysis of Washington state county-level data, including cases, deaths, and vaccination rates per 10k.
+                </p>
+                <!-- Link to the map file -->
+                <a href="wa_covid_cases.html" class="inline-flex items-center justify-center w-full md:w-auto px-6 py-2 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 transition duration-150">
+                    Explore Data
+                </a>
+            </div>
+
         </section>
+
+        <!-- Footer / Repository Info -->
+        <footer class="mt-10 pt-5 border-t text-center text-sm text-gray-500">
+            <p>
+                Built for GEOG 328: Interactive Web Mapping | Data Source: GeoJSON files.
+            </p>
+        </footer>
+
     </div>
+
 </body>
 </html>
