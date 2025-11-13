@@ -76,8 +76,8 @@
             minZoom: 5,
         });
 
-        // Data source path (relative to the HTML file)
-        const geoJsonPath = 'assets/wa-covid-data-102521.geojson';
+        // Data source path (FIXED to use root-relative path for GitHub Pages deployment)
+        const geoJsonPath = '/Population-WebMapping/assets/wa-covid-data-102521.geojson';
         const layerId = 'wa-covid-layer';
         const sourceId = 'wa-covid-data';
         const dataProperty = 'casePer10k';
