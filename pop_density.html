@@ -4,166 +4,197 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>U.S. State Population Density</title>
+
     <!-- Mapbox GL JS -->
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet"/>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
-        /* Ensures the map takes up the full viewport */
-        #map{position:absolute;top:0;bottom:0;width:100%}
+        #map {
+            position:absolute;
+            top:0;
+            bottom:0;
+            width:100%;
+        }
     </style>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans:['Inter','sans-serif']
-                    }
-                }
-            }
-        };
-    </script>
 </head>
-<body class="font-sans antialiased bg-gray-50">
+
+<body class="font-sans bg-gray-50">
     <div id="map"></div>
 
-    <!-- Title and Data Panel Overlay (Top Left) -->
-    <div class="absolute top-4 left-4 z-10 p-4 bg-white shadow-2xl rounded-xl max-w-xs md:max-w-md backdrop-blur-sm bg-opacity-90">
-        <h1 class="text-xl md:text-2xl font-extrabold text-gray-800">U.S. Population Density</h1>
-        <p class="text-sm text-gray-500 mb-2">People per square mile by State</p>
+    <!-- TITLE PANEL (Top Left) -->
+    <div class="absolute top-4 left-4 z-10 p-4 bg-white shadow-xl rounded-xl bg-opacity-90 backdrop-blur-sm">
+        <h1 class="text-xl font-extrabold text-gray-800">U.S. Population Density</h1>
+        <p class="text-sm text-gray-500">People per square mile by State</p>
         <div id="data-panel" class="mt-3 p-3 border-l-4 border-indigo-500 bg-indigo-50 rounded-lg">
-            <p class="text-lg font-bold text-indigo-700" id="state-name">Hover over a state</p>
-            <p class="text-sm text-gray-600">Density: <span id="density-value" class="font-semibold">N/A</span></p>
+            <p id="state-name" class="text-lg font-bold text-indigo-700">Hover over a state</p>
+            <p class="text-sm text-gray-600">
+                Density: <span id="density-value" class="font-semibold">N/A</span>
+            </p>
         </div>
     </div>
 
-    <!-- Legend Overlay (Bottom Left) -->
-    <div class="absolute bottom-4 left-4 z-10 p-3 bg-white shadow-2xl rounded-xl backdrop-blur-sm bg-opacity-90">
+    <!-- LEGEND (Bottom Left) -->
+    <div class="absolute bottom-4 left-4 z-10 p-3 bg-white shadow-xl rounded-xl bg-opacity-90 backdrop-blur-sm">
         <h3 class="text-sm font-bold text-gray-700 mb-1 border-b pb-1">Population Density</h3>
-        <div id="legend" class="space-y-1 text-xs"></div>
+        <div id="legend" class="text-xs space-y-1"></div>
     </div>
 
-    <script type="module">
-        // Using the definitive Mapbox Access Token provided by the user.
-        mapboxgl.accessToken = 'pk.eyJ1IjoicmJpc3dhMyIsImEiOiJjbWh4dmV5MmIwNWZqMnZweG03ODEwNWZzIn0.Rjy2XmLjimR0Amk8DAg9yA';
-        
-        const map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/mapbox/light-v11',
-            center: [-98,38],
-            zoom: 3.5,
-            minZoom: 3
-        });
+<script type="module">
+mapboxgl.accessToken = 'pk.eyJ1IjoicmJpc3dhMyIsImEiOiJjbWh4dmV5MmIwNWZqMnZweG03ODEwNWZzIn0.Rjy2XmLjimR0Amk8DAg9yA';
 
-        // Correct GeoJSON path for GitHub Pages hosted under a repository name
-        const geoJsonPath = 'assets/stateData.geojson';
-        const sourceId = 'us-states-data';
-        const layerId = 'pop-density-fill';
-        const dataProperty = 'density';
-        
-        const colorStops = [
-            // [Value, Color]
-            [0,'#f0f9e8'],      // Less than 50
-            [50,'#bae4bc'],     // 50 to 99
-            [100,'#7bccc4'],    // 100 to 249
-            [250,'#43a2ca'],    // 250 to 499
-            [500,'#0868ac']     // 500 and above
-        ];
+const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/light-v11',
+    center: [-98, 38],
+    zoom: 3.5,
+    minZoom: 3
+});
 
-        const stateNameEl = document.getElementById('state-name');
-        const densityEl = document.getElementById('density-value');
-        let hovered = null;
+// ---------- VARIABLES ----------
+const sourceId = "us-states";
+const layerId  = "states-fill";
+const dataProperty = "density";   // <-- your GeoJSON must have this property
+const geoJsonPath = "assets/stateData.geojson";
 
-        /** Updates the floating data panel */
-        function updatePanel(name,val){
-            stateNameEl.textContent = name;
-            // Ensure data is displayed as a number
-            densityEl.textContent = (typeof val === 'number' && !isNaN(val)) ? val.toFixed(1) : 'N/A';
+// Color ranges (like your screenshot)
+const colorStops = [
+    [0,   '#f0f9e8'],
+    [50,  '#bae4bc'],
+    [100, '#7bccc4'],
+    [250, '#43a2ca'],
+    [500, '#0868ac']
+];
+
+let hovered = null;
+
+// -------- Update information panel --------
+function updatePanel(name, val) {
+    document.getElementById("state-name").textContent = name;
+    document.getElementById("density-value").textContent =
+        typeof val === "number" ? val.toFixed(1) : "N/A";
+}
+
+// -------- Build Legend --------
+function generateLegend() {
+    const legend = document.getElementById("legend");
+    let html = "";
+
+    for (let i = 0; i < colorStops.length; i++) {
+        const [value, color] = colorStops[i];
+
+        let label = "";
+        if (i === 0) label = `Less than ${colorStops[i+1][0]}`;
+        else if (i === colorStops.length - 1) label = `≥ ${value}`;
+        else label = `${value} – ${colorStops[i+1][0] - 1}`;
+
+        html += `
+            <div class="flex items-center space-x-2">
+                <div class="w-4 h-4 rounded-sm" style="background:${color}"></div>
+                <span class="text-gray-700">${label}</span>
+            </div>
+        `;
+    }
+
+    legend.innerHTML = html;
+}
+
+map.on("load", () => {
+    generateLegend();
+
+    // ---- Add GeoJSON source ----
+    map.addSource(sourceId, {
+        type: "geojson",
+        data: geoJsonPath
+    });
+
+    // ---- Add Choropleth Layer ----
+    map.addLayer({
+        id: layerId,
+        type: "fill",
+        source: sourceId,
+        paint: {
+            "fill-color": [
+                "step",
+                ["to-number", ["get", dataProperty]],
+                colorStops[0][1],
+                colorStops[1][0], colorStops[1][1],
+                colorStops[2][0], colorStops[2][1],
+                colorStops[3][0], colorStops[3][1],
+                colorStops[4][0], colorStops[4][1]
+            ],
+            "fill-opacity": [
+                "case",
+                ["boolean", ["feature-state", "hover"], false],
+                0.9,
+                0.8
+            ]
         }
-        
-        /** Generates the legend HTML based on colorStops */
-        function generateLegend(){
-            const legend = document.getElementById('legend');
-            let html='';
-            for(let i=0;i<colorStops.length;i++){
-                const [v,c] = colorStops[i];
-                let label;
-                
-                if(i===0) label = `Less than ${colorStops[i+1][0]}`;
-                else if(i===colorStops.length-1) label = `≥ ${v}`;
-                else label = `${v} – ${colorStops[i+1][0]-1}`;
-                
-                html += `<div class="flex items-center space-x-2"><div class="w-4 h-4 rounded-sm" style="background:${c}"></div><span class="text-gray-700">${label}</span></div>`;
+    });
+
+    // ---- Add Borders ----
+    map.addLayer({
+        id: "state-borders",
+        type: "line",
+        source: sourceId,
+        paint: {
+            "line-color": [
+                "case",
+                ["boolean", ["feature-state", "hover"], false],
+                "#000",
+                "#fff"
+            ],
+            "line-width": [
+                "case",
+                ["boolean", ["feature-state", "hover"], false],
+                2,
+                0.5
+            ]
+        }
+    });
+
+    // ---- Hover Interaction ----
+    map.on("mousemove", layerId, (e) => {
+        const feature = e.features[0];
+        const stateId = feature.properties.name; // use name as ID
+
+        if (hovered !== stateId) {
+            if (hovered !== null) {
+                map.setFeatureState(
+                    { source: sourceId, id: hovered },
+                    { hover: false }
+                );
             }
-            legend.innerHTML = html;
+
+            hovered = stateId;
+
+            map.setFeatureState(
+                { source: sourceId, id: stateId },
+                { hover: true }
+            );
         }
 
-        map.on('load', () => {
-            generateLegend();
-            
-            // 1. Add GeoJSON source
-            map.addSource(sourceId,{
-                type:'geojson',
-                data: geoJsonPath, // Correct path
-                //promoteId:'id'     // Use the 'id' field in GeoJSON for feature state tracking
-            });
-            
-            // 2. Add Choropleth Fill Layer
-            map.addLayer({
-                id:layerId,
-                type:'fill',
-                source:sourceId,
-                paint:{
-                    // Use 'to-number' to force numerical comparison for the choropleth coloring
-                    'fill-color': [
-                        'step',
-                        ['to-number', ['get', dataProperty]],
-                        colorStops[0][1], // Default color
-                        colorStops[1][0], colorStops[1][1],
-                        colorStops[2][0], colorStops[2][1],
-                        colorStops[3][0], colorStops[3][1],
-                        colorStops[4][0], colorStops[4][1]
-                    ],
-                    'fill-opacity': ['case',['boolean',['feature-state','hover'],false],0.9,0.8]
-                }
-            });
-            
-            // 3. Add Border Line Layer
-            map.addLayer({
-                id:'state-borders',
-                type:'line',
-                source:sourceId,
-                paint:{
-                    'line-color':['case',['boolean',['feature-state','hover'],false],'#000','#fff'],
-                    'line-width':['case',['boolean',['feature-state','hover'],false],2,0.5]
-                }
-            });
+        updatePanel(feature.properties.name, feature.properties[dataProperty]);
+        map.getCanvas().style.cursor = "pointer";
+    });
 
-            // 4. Handle Mouse Interactions (Hover)
-            map.on('mousemove',layerId,e=>{
-                if(!e.features.length) return;
-                const f=e.features[0];
-                const stateId = f.properties.name;
-                
-                if(hovered !== stateId){
-                    if(hovered !== null) map.setFeatureState({source:sourceId,id:hovered},{hover:false});
-                    hovered = stateId;
-                    map.setFeatureState({source: sourceId, id: stateId}, {hover: true});
-                    updatePanel(f.properties.name,f.properties[dataProperty]);
-                    map.getCanvas().style.cursor = 'pointer';
-                }
-            });
+    map.on("mouseleave", layerId, () => {
+        if (hovered !== null) {
+            map.setFeatureState(
+                { source: sourceId, id: hovered },
+                { hover: false }
+            );
+        }
 
-            map.on('mouseleave', layerId, () => {
-                if(hovered !== null){
-                    map.setFeatureState({source:sourceId,id:hovered},{hover:false});
-                    hovered = null;
-                }
-                updatePanel('Hover over a state',null);
-                map.getCanvas().style.cursor = '';
-            });
-        });
-    </script>
+        hovered = null;
+        updatePanel("Hover over a state", null);
+        map.getCanvas().style.cursor = "";
+    });
+});
+</script>
+
 </body>
 </html>
