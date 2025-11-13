@@ -1,0 +1,61 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 4: Interactive Web Mapping</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-4xl w-full bg-white shadow-xl rounded-xl p-8 md:p-12 border border-gray-100">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-2">
+                GEOG 328: Lab 4
+            </h1>
+            <p class="text-xl text-indigo-600 font-semibold">
+                Interactive Web Mapping Projects
+            </p>
+        </header>
+
+        <section class="space-y-6">
+            <p class="text-gray-700 leading-relaxed">
+                This repository contains the deliverables for Lab 4, featuring two choropleth maps with interactive hover capabilities built with Mapbox GL JS.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-6 pt-4">
+
+                <!-- Map 1: US Population Density -->
+                <div class="p-6 border border-indigo-200 rounded-lg bg-indigo-50 shadow-md transition duration-300 hover:shadow-lg hover:bg-indigo-100">
+                    <h2 class="text-2xl font-bold text-indigo-800 mb-3">
+                        U.S. Population Density Map
+                    </h2>
+                    <p class="text-gray-600 mb-4">
+                        A choropleth map visualizing population density across U.S. states using the **`stateData.geojson`** dataset.
+                    </p>
+                    <a href="pop_density.html" class="inline-flex items-center justify-center w-full px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-150">
+                        View Population Density Map
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </a>
+                </div>
+
+                <!-- Map 2: WA COVID-19 Data -->
+                <div class="p-6 border border-emerald-200 rounded-lg bg-emerald-50 shadow-md transition duration-300 hover:shadow-lg hover:bg-emerald-100">
+                    <h2 class="text-2xl font-bold text-emerald-800 mb-3">
+                        WA COVID-19 Cases Map
+                    </h2>
+                    <p class="text-gray-600 mb-4">
+                        A choropleth map visualizing COVID-19 Cases per 10,000 residents for Washington State counties.
+                    </p>
+                    <a href="wa_covid_cases.html" class="inline-flex items-center justify-center w-full px-5 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300 transition duration-150">
+                        View WA COVID Map
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </a>
+                </div>
+
+            </div>
+        </section>
+    </div>
+</body>
+</html>
