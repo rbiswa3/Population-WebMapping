@@ -44,8 +44,8 @@
     </div>
 
     <script type="module">
-        // Your valid public token
-        mapboxgl.accessToken = 'pk.eyJ1IjoicmbiMjAwMyIsImEiOiJjbWhlYnRueGYwYzluMmxwdjducmcyNHEyIn0.1FtPN1VMfSJ5EHlF_UF26g';
+        // CORRECTED Mapbox Access Token based on your latest input.
+        mapboxgl.accessToken = 'pk.eyJ1IjoicmJpc3dhMyIsImEiOiJjbWh4dmV5MmIwNWZqMnZweG03ODEwNWZzIn0.Rjy2XmLjimR0Amk8DAg9yA';
         
         const map = new mapboxgl.Map({
             container: 'map',
@@ -55,7 +55,7 @@
             minZoom: 3
         });
 
-        // CRITICAL FIX 1: Use root-relative path for GitHub Pages
+        // Confirmed root-relative path for GitHub Pages hosting
         const geoJsonPath = '/Population-WebMapping/assets/stateData.geojson';
         const sourceId = 'us-states-data';
         const layerId = 'pop-density-fill';
@@ -76,6 +76,7 @@
 
         function updatePanel(name,val){
             stateNameEl.textContent = name;
+            // Ensure data is displayed as a number
             densityEl.textContent = (typeof val === 'number' && !isNaN(val)) ? val.toFixed(1) : 'N/A';
         }
         
@@ -85,6 +86,8 @@
             for(let i=0;i<colorStops.length;i++){
                 const [v,c] = colorStops[i];
                 let label;
+                
+                // Adjust label based on position in the stops array
                 if(i===0) label = `Less than ${colorStops[i+1][0]}`;
                 else if(i===colorStops.length-1) label = `≥ ${v}`;
                 else label = `${v} – ${colorStops[i+1][0]-1}`;
@@ -99,7 +102,7 @@
             
             map.addSource(sourceId,{
                 type:'geojson',
-                data: geoJsonPath, // Uses the corrected path
+                data: geoJsonPath,
                 promoteId:'id'
             });
             
@@ -108,11 +111,11 @@
                 type:'fill',
                 source:sourceId,
                 paint:{
-                    // FIX 2: Explicit step expression for reliable numerical coloring
+                    // Use 'to-number' to handle data type ambiguity and ensure colors match the stops
                     'fill-color': [
                         'step',
                         ['to-number', ['get', dataProperty]],
-                        colorStops[0][1], // Default color
+                        colorStops[0][1], // Default color for density < 50
                         colorStops[1][0], colorStops[1][1],
                         colorStops[2][0], colorStops[2][1],
                         colorStops[3][0], colorStops[3][1],
@@ -146,7 +149,6 @@
                 }
             });
 
-            // FIX 3: Corrected syntax for mouseleave function
             map.on('mouseleave', layerId, () => {
                 if(hovered !== null){
                     map.setFeatureState({source:sourceId,id:hovered},{hover:false});
