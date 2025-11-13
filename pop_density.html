@@ -59,7 +59,7 @@
 
     <script type="module">
         // --- Mapbox Configuration ---
-        // Your valid public token is used here
+        // CORRECTED: Your valid public token is used here
         mapboxgl.accessToken = 'pk.eyJ1IjoicmtiMjAwMyIsImEiOiJjbWhlYnRueGYwYzluMmxwdjducmcyNHEyIn0.1FtPN1VMfSJ5EHlF_UF26g';
 
         const map = new mapboxgl.Map({
@@ -99,7 +99,7 @@
         function updateDataPanel(name, value) {
             stateNameElement.textContent = name;
             // Display density value rounded to 1 decimal place
-            densityValueElement.textContent = value !== null ? value.toFixed(1) : 'N/A';
+            densityValueElement.textContent = (typeof value === 'number' && !isNaN(value)) ? value.toFixed(1) : 'N/A';
         }
 
         // --- Legend Generation ---
@@ -149,10 +149,13 @@
                 type: 'fill',
                 source: sourceId,
                 paint: {
-                    // FIX: Use ['to-number', ...] to ensure the 'density' value is treated numerically for the step expression
+                    // FIX: Using ['to-number', ...] to ensure the 'density' value is treated numerically for the step expression
                     'fill-color': [
                         'step',
-                        ['to-number', ['get', dataProperty]], // *** THE CRITICAL FIX IS HERE ***
+                        // Force the 'density' property to be read as a number
+                        ['to-number', ['get', 'density']],
+                        
+                        // Define the color stops
                         colorStops[0][1], // Default color for < 50
                         colorStops[1][0], colorStops[1][1],
                         colorStops[2][0], colorStops[2][1],
@@ -195,7 +198,7 @@
             map.on('mousemove', layerId, (e) => {
                 if (e.features.length > 0) {
                     const feature = e.features[0];
-                    // Retrieve ID using feature.id now that we promoted it in the source config
+                    // Retrieve ID using feature.id
                     const stateId = feature.id; 
                     const stateName = feature.properties.name;
                     // The property value is still available on the feature properties object
