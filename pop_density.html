@@ -10,6 +10,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Ensures the map takes up the full viewport */
         #map{position:absolute;top:0;bottom:0;width:100%}
     </style>
     <script>
@@ -27,7 +28,7 @@
 <body class="font-sans antialiased bg-gray-50">
     <div id="map"></div>
 
-    <!-- Title and Data Panel Overlay -->
+    <!-- Title and Data Panel Overlay (Top Left) -->
     <div class="absolute top-4 left-4 z-10 p-4 bg-white shadow-2xl rounded-xl max-w-xs md:max-w-md backdrop-blur-sm bg-opacity-90">
         <h1 class="text-xl md:text-2xl font-extrabold text-gray-800">U.S. Population Density</h1>
         <p class="text-sm text-gray-500 mb-2">People per square mile by State</p>
@@ -37,14 +38,14 @@
         </div>
     </div>
 
-    <!-- Legend Overlay -->
+    <!-- Legend Overlay (Bottom Left) -->
     <div class="absolute bottom-4 left-4 z-10 p-3 bg-white shadow-2xl rounded-xl backdrop-blur-sm bg-opacity-90">
         <h3 class="text-sm font-bold text-gray-700 mb-1 border-b pb-1">Population Density</h3>
         <div id="legend" class="space-y-1 text-xs"></div>
     </div>
 
     <script type="module">
-        // CORRECTED Mapbox Access Token based on your latest input.
+        // Using the definitive Mapbox Access Token provided by the user.
         mapboxgl.accessToken = 'pk.eyJ1IjoicmJpc3dhMyIsImEiOiJjbWh4dmV5MmIwNWZqMnZweG03ODEwNWZzIn0.Rjy2XmLjimR0Amk8DAg9yA';
         
         const map = new mapboxgl.Map({
@@ -55,7 +56,7 @@
             minZoom: 3
         });
 
-        // Confirmed root-relative path for GitHub Pages hosting
+        // Correct GeoJSON path for GitHub Pages hosted under a repository name
         const geoJsonPath = '/Population-WebMapping/assets/stateData.geojson';
         const sourceId = 'us-states-data';
         const layerId = 'pop-density-fill';
@@ -63,23 +64,25 @@
         
         const colorStops = [
             // [Value, Color]
-            [0,'#f0f9e8'],      // < 50
-            [50,'#bae4bc'],     // 50 - 99
-            [100,'#7bccc4'],    // 100 - 249
-            [250,'#43a2ca'],    // 250 - 499
-            [500,'#0868ac']     // 500+
+            [0,'#f0f9e8'],      // Less than 50
+            [50,'#bae4bc'],     // 50 to 99
+            [100,'#7bccc4'],    // 100 to 249
+            [250,'#43a2ca'],    // 250 to 499
+            [500,'#0868ac']     // 500 and above
         ];
 
         const stateNameEl = document.getElementById('state-name');
         const densityEl = document.getElementById('density-value');
         let hovered = null;
 
+        /** Updates the floating data panel */
         function updatePanel(name,val){
             stateNameEl.textContent = name;
             // Ensure data is displayed as a number
             densityEl.textContent = (typeof val === 'number' && !isNaN(val)) ? val.toFixed(1) : 'N/A';
         }
         
+        /** Generates the legend HTML based on colorStops */
         function generateLegend(){
             const legend = document.getElementById('legend');
             let html='';
@@ -87,7 +90,6 @@
                 const [v,c] = colorStops[i];
                 let label;
                 
-                // Adjust label based on position in the stops array
                 if(i===0) label = `Less than ${colorStops[i+1][0]}`;
                 else if(i===colorStops.length-1) label = `≥ ${v}`;
                 else label = `${v} – ${colorStops[i+1][0]-1}`;
@@ -100,22 +102,24 @@
         map.on('load', () => {
             generateLegend();
             
+            // 1. Add GeoJSON source
             map.addSource(sourceId,{
                 type:'geojson',
-                data: geoJsonPath,
-                promoteId:'id'
+                data: geoJsonPath, // Correct path
+                promoteId:'id'     // Use the 'id' field in GeoJSON for feature state tracking
             });
             
+            // 2. Add Choropleth Fill Layer
             map.addLayer({
                 id:layerId,
                 type:'fill',
                 source:sourceId,
                 paint:{
-                    // Use 'to-number' to handle data type ambiguity and ensure colors match the stops
+                    // Use 'to-number' to force numerical comparison for the choropleth coloring
                     'fill-color': [
                         'step',
                         ['to-number', ['get', dataProperty]],
-                        colorStops[0][1], // Default color for density < 50
+                        colorStops[0][1], // Default color
                         colorStops[1][0], colorStops[1][1],
                         colorStops[2][0], colorStops[2][1],
                         colorStops[3][0], colorStops[3][1],
@@ -125,6 +129,7 @@
                 }
             });
             
+            // 3. Add Border Line Layer
             map.addLayer({
                 id:'state-borders',
                 type:'line',
@@ -135,6 +140,7 @@
                 }
             });
 
+            // 4. Handle Mouse Interactions (Hover)
             map.on('mousemove',layerId,e=>{
                 if(!e.features.length) return;
                 const f=e.features[0];
