@@ -1,253 +1,248 @@
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>U.S. Population Density</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>U.S. State Population Density</title>
+    <!-- Mapbox GL JS -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet" />
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
-    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        /* Set the map container to fill the screen */
         #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
             width: 100%;
-            height: 80vh; 
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        /* Custom styles for the interactive elements */
-        .map-overlay {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 10;
-            max-width: 250px;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-            font-size: 0.875rem;
-        }
-        .color-box {
-            width: 20px;
-            height: 12px;
-            margin-right: 10px;
-            border-radius: 2px;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-        #state-info {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 10;
-            min-width: 200px;
-            opacity: 0; 
-            transition: opacity 0.2s ease-in-out;
         }
     </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
 </head>
-<body class="bg-gray-100 p-8">
+<body class="font-sans antialiased bg-gray-50">
 
-    <div class="max-w-6xl mx-auto">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">U.S. State Population Density (People per Sq. Mile)</h1>
-        <p class="text-gray-600 mb-6">Interactive choropleth map demonstrating population density across the United States.</p>
+    <!-- Map Container -->
+    <div id="map"></div>
 
-        <!-- Map Container -->
-        <div id='map'></div>
+    <!-- Title and Data Panel Overlay -->
+    <div class="absolute top-4 left-4 z-10 p-4 bg-white shadow-2xl rounded-xl max-w-xs md:max-w-md backdrop-blur-sm bg-opacity-90">
+        <h1 class="text-xl md:text-2xl font-extrabold text-gray-800">
+            U.S. Population Density
+        </h1>
+        <p class="text-sm text-gray-500 mb-2">People per square mile by State</p>
 
-        <!-- Floating Info Box (Hover Data) -->
-        <div id="state-info">
-            <h3 class="font-bold text-lg text-indigo-700 mb-1" id="state-name">Hover over a state</h3>
-            <p class="text-sm text-gray-600">Density: <span id="density-value" class="font-semibold text-gray-800">—</span></p>
-        </div>
-
-        <!-- Legend Overlay -->
-        <div id="legend-overlay" class="map-overlay">
-            <h3 class="font-bold text-gray-800 mb-2 border-b pb-1">Population Density</h3>
-            <div id="legend-content">
-                <!-- Legend items will be inserted here by JavaScript -->
-            </div>
+        <!-- Data Panel (Tooltip) -->
+        <div id="data-panel" class="mt-3 p-3 border-l-4 border-indigo-500 bg-indigo-50 rounded-lg">
+            <p class="text-lg font-bold text-indigo-700" id="state-name">Hover over a state</p>
+            <p class="text-sm text-gray-600">Density: <span id="density-value" class="font-semibold">N/A</span></p>
         </div>
     </div>
 
-    <script>
-        // --- Configuration ---
-        // Your Mapbox Access Token
-        mapboxgl.accessToken = 'pk.eyJ1IjoiamFrb2J6aGFvIiwiYSI6ImNpcms2YWsyMzAwMmtmbG5icTFxZ3ZkdncifQ.P9MBej1xacybKcDN-jehvw';
-        
-        // **GeoJSON File Inclusion:** stateData.geojson
-        const geoJsonPath = './assets/stateData.geojson';
+    <!-- Legend Overlay -->
+    <div class="absolute bottom-4 left-4 z-10 p-3 bg-white shadow-2xl rounded-xl backdrop-blur-sm bg-opacity-90">
+        <h3 class="text-sm font-bold text-gray-700 mb-1 border-b pb-1">Population Density</h3>
+        <div id="legend" class="space-y-1 text-xs">
+            <!-- Legend Items will be injected here by JavaScript -->
+        </div>
+    </div>
 
-        // Population density bins and colors (People per square mile)
-        const densityStops = [
-            [0, '#edf8e9'],    
-            [50, '#bae4b3'],
-            [100, '#74c476'],
-            [200, '#31a354'],
-            [500, '#006d2c'], 
-            [1000, '#003d19'] 
-        ];
+    <script type="module">
+        // --- Mapbox Configuration ---
+        // REPLACE WITH YOUR ACTUAL Mapbox ACCESS TOKEN
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZ2VtaW5pLWxpYiIsImEiOiJjbHU0ZWh2MWExODhvMmtwYW5lZTRqZmxrIn0.sHw6xQ-mE0v7JbW091S5Sg';
 
-        // --- Map Initialization ---
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/light-v10', 
-            center: [-100, 40], 
-            zoom: 3 
+            style: 'mapbox://styles/mapbox/light-v11',
+            center: [-98, 38], // Centered on the continental U.S.
+            zoom: 3.5,
+            minZoom: 3,
         });
 
+        // Data source path and properties
+        const geoJsonPath = 'assets/stateData.geojson';
+        const layerId = 'pop-density-fill';
+        const sourceId = 'us-states-data';
+        const dataProperty = 'density'; // Corresponds to the property in stateData.geojson
+
+        // Define the color stops for the choropleth map (People per square mile)
+        const colorStops = [
+            // [Value, Color]
+            [0, '#f0f9e8'],      // < 50 (Very Low)
+            [50, '#bae4bc'],     // 50 - 99 (Low)
+            [100, '#7bccc4'],    // 100 - 249 (Medium)
+            [250, '#43a2ca'],    // 250 - 499 (High)
+            [500, '#0868ac']     // 500+ (Very High)
+        ];
+
+        // --- Utility to update data panel ---
+        const stateNameElement = document.getElementById('state-name');
+        const densityValueElement = document.getElementById('density-value');
         let hoveredStateId = null;
 
-        // Add a general Mapbox error handler to catch initialization issues
-        map.on('error', (e) => {
-            console.error('A Mapbox GL JS error occurred:', e.error);
-            // Display a message to the user if the map fails to initialize
-            document.getElementById('map').innerHTML = '<div class="flex items-center justify-center h-full text-red-600 font-bold">Map initialization error. Check console for details.</div>';
-        });
+        /**
+         * Updates the floating data panel with state information.
+         * @param {string} name - State name.
+         * @param {number|string} value - The data value (density).
+         */
+        function updateDataPanel(name, value) {
+            stateNameElement.textContent = name;
+            densityValueElement.textContent = value !== null ? value.toFixed(1) : 'N/A';
+        }
 
-        // --- Core Map Logic ---
-        map.on('load', async () => {
-            console.log("Map loaded successfully. Attempting to fetch GeoJSON data...");
-            try {
-                // 1. Fetch GeoJSON Data
-                const response = await fetch(geoJsonPath);
-                
-                // Throw an error if the response is not ok (e.g., 404 Not Found)
-                if (!response.ok) {
-                     throw new Error(`Failed to load GeoJSON: ${response.status} (${response.statusText}). Check if the file path '${geoJsonPath}' is correct.`);
+        // --- Legend Generation ---
+        function generateLegend() {
+            const legendDiv = document.getElementById('legend');
+            let legendHTML = '';
+
+            // Create labels for the stops
+            for (let i = 0; i < colorStops.length; i++) {
+                const [value, color] = colorStops[i];
+                let label;
+
+                if (i === 0) {
+                    // For the first stop, label is "Less than next stop"
+                    label = `Less than ${colorStops[i+1][0]}`;
+                } else if (i === colorStops.length - 1) {
+                    // For the last stop, label is "Value +"
+                    label = `${value} +`;
+                } else {
+                    // For middle stops, label is "Value - (Next Value - 1)"
+                    label = `${value} - ${colorStops[i+1][0] - 1}`;
                 }
-                
-                const geojsonData = await response.json();
-                console.log("GeoJSON data loaded.");
 
-                // 2. Add Data Source (using 'state-data')
-                map.addSource('state-data', {
-                    type: 'geojson',
-                    data: geojsonData
-                });
-
-                // 3. Add Choropleth Layer (filled polygons)
-                map.addLayer({
-                    'id': 'state-fills',
-                    'type': 'fill',
-                    'source': 'state-data',
-                    'layout': {},
-                    'paint': {
-                        'fill-color': {
-                            property: 'density', // Use the 'density' property from the GeoJSON
-                            stops: densityStops
-                        },
-                        'fill-opacity': 0.8
-                    }
-                });
-
-                // 4. Add State Border Outline Layer
-                map.addLayer({
-                    'id': 'state-borders',
-                    'type': 'line',
-                    'source': 'state-data',
-                    'layout': {},
-                    'paint': {
-                        'line-color': '#fff',
-                        'line-width': 1
-                    }
-                });
-
-                // 5. Setup Legend
-                createLegend(densityStops);
-
-                // 6. Setup Interactivity (Hover)
-                setupHoverEffect();
-
-            } catch (error) {
-                // This catch handles errors from the fetch or data processing
-                console.error("Error loading or processing GeoJSON map data:", error.message || error);
-                document.getElementById('map').innerHTML = `<div class="flex items-center justify-center h-full text-red-600 font-bold">Error loading map data: ${error.message || 'Check console for details.'}</div>`;
+                legendHTML += `
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 rounded-sm" style="background-color: ${color};"></div>
+                        <span class="text-gray-700">${label}</span>
+                    </div>
+                `;
             }
-        });
 
-        // --- Interactivity Functions ---
+            legendDiv.innerHTML = legendHTML;
+        }
 
-        function setupHoverEffect() {
-            const stateInfo = document.getElementById('state-info');
+        // --- Map Initialization and Interactivity ---
+        map.on('load', () => {
+            generateLegend();
 
-            // Layer for hover effect (outline)
-            map.addLayer({
-                'id': 'state-highlight',
-                'type': 'line',
-                'source': 'state-data',
-                'paint': {
-                    'line-color': '#000000',
-                    'line-width': 3
-                },
-                'filter': ['==', 'id', ''] 
+            // 1. Add the GeoJSON data source
+            map.addSource(sourceId, {
+                type: 'geojson',
+                data: geoJsonPath
             });
 
-            // Handle mouse move event
-            map.on('mousemove', 'state-fills', (e) => {
-                const feature = e.features[0];
-                if (feature) {
+            // 2. Add the choropleth fill layer
+            map.addLayer({
+                id: layerId,
+                type: 'fill',
+                source: sourceId,
+                paint: {
+                    // Use 'step' expression to assign colors based on density
+                    'fill-color': [
+                        'step',
+                        ['get', dataProperty],
+                        colorStops[0][1], // Default color for < 50
+                        colorStops[1][0], colorStops[1][1],
+                        colorStops[2][0], colorStops[2][1],
+                        colorStops[3][0], colorStops[3][1],
+                        colorStops[4][0], colorStops[4][1]
+                    ],
+                    'fill-opacity': [
+                        'case',
+                        ['boolean', ['feature-state', 'hover'], false],
+                        0.9, // Slightly higher opacity on hover
+                        0.8  // Normal opacity
+                    ],
+                }
+            });
+
+            // 3. Add a line layer for the state borders (and hover outline)
+            map.addLayer({
+                id: 'state-borders',
+                type: 'line',
+                source: sourceId,
+                paint: {
+                    'line-color': [
+                        'case',
+                        ['boolean', ['feature-state', 'hover'], false],
+                        '#000000', // Black for hover
+                        '#ffffff'  // White normally
+                    ],
+                    'line-width': [
+                        'case',
+                        ['boolean', ['feature-state', 'hover'], false],
+                        2,
+                        0.5
+                    ]
+                }
+            });
+
+            // 4. Implement Hover Functionality
+
+            // Mouse move event
+            map.on('mousemove', layerId, (e) => {
+                if (e.features.length > 0) {
+                    const feature = e.features[0];
+                    // IMPORTANT: The GeoJSON file should have a unique 'id' field for feature state management
+                    // In the stateData.geojson, the ID is available, so we use it.
                     const stateId = feature.id;
                     const stateName = feature.properties.name;
-                    // Robust check for density value
-                    const density = feature.properties.density !== undefined && !isNaN(feature.properties.density)
-                        ? feature.properties.density.toFixed(1)
-                        : 'N/A'; 
+                    const densityValue = feature.properties[dataProperty];
 
+                    // Only update if we've moved to a different feature
                     if (hoveredStateId !== stateId) {
-                        map.setFilter('state-highlight', ['==', 'id', stateId]);
-                        hoveredStateId = stateId;
-                    }
+                        // Reset the hover state of the previous state
+                        if (hoveredStateId !== null) {
+                            map.setFeatureState(
+                                { source: sourceId, id: hoveredStateId },
+                                { hover: false }
+                            );
+                        }
 
-                    stateInfo.style.opacity = 1;
-                    document.getElementById('state-name').textContent = stateName;
-                    document.getElementById('density-value').textContent = density + " people/sq. mi.";
+                        // Set the hover state of the new state
+                        hoveredStateId = stateId;
+                        map.setFeatureState(
+                            { source: sourceId, id: hoveredStateId },
+                            { hover: true }
+                        );
+
+                        // Update the data panel
+                        updateDataPanel(stateName, densityValue);
+
+                        // Change cursor style
+                        map.getCanvas().style.cursor = 'pointer';
+                    }
                 }
             });
 
-            // Handle mouse leave event
-            map.on('mouseleave', 'state-fills', () => {
-                if (hoveredStateId) {
-                    map.setFilter('state-highlight', ['==', 'id', '']);
+            // Mouse leave event
+            map.on('mouseleave', layerId, () => {
+                if (hoveredStateId !== null) {
+                    // Clear the hover state on the map
+                    map.setFeatureState(
+                        { source: sourceId, id: hoveredStateId },
+                        { hover: false }
+                    );
                 }
                 hoveredStateId = null;
-                stateInfo.style.opacity = 0;
+                // Reset the data panel
+                updateDataPanel('Hover over a state', null);
+                // Reset cursor style
+                map.getCanvas().style.cursor = '';
             });
-        }
 
-        // --- Legend Function ---
-
-        function createLegend(stops) {
-            const legendContent = document.getElementById('legend-content');
-
-            for (let i = 0; i < stops.length; i++) {
-                const color = stops[i][1];
-                const value = stops[i][0];
-
-                let label;
-                if (i === stops.length - 1) {
-                    label = `${value}+`;
-                } else if (i > 0) {
-                     const nextValue = stops[i + 1][0];
-                     label = `${value} - <${nextValue}`;
-                } else {
-                    label = `0 - <${stops[1][0]}`;
-                }
-
-                const item = document.createElement('div');
-                item.className = 'legend-item';
-                item.innerHTML = `<span class="color-box" style="background-color: ${color};"></span><span>${label}</span>`;
-                legendContent.appendChild(item);
-            }
-        }
+        });
     </script>
 </body>
 </html>
