@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -66,7 +67,8 @@
 
     <script type="module">
         // --- Mapbox Configuration ---
-        mapboxgl.accessToken = 'pk.eyJ1IjoiZ2VtaW5pLWxpYiIsImEiOiJjbHU0ZWh2MWExODhvMmtwYW5lZTRqZmxrIn0.sHw6xQ-mE0v7JbW091S5Sg'; // Sample token
+        // Access Token: Replaced with your provided public token
+        mapboxgl.accessToken = 'pk.eyJ1IjoicmtiMjAwMyIsImEiOiJjbWhlYnRueGYwYzluMmxwdjducmcyNHEyIn0.1FtPN1VMfSJ5EHlF_UF26g'; 
 
         const map = new mapboxgl.Map({
             container: 'map',
@@ -76,7 +78,8 @@
             minZoom: 5,
         });
 
-        // Data source path (FIXED to use root-relative path for GitHub Pages deployment)
+        // Data source path 
+        // Path is correct for GitHub Pages deployment
         const geoJsonPath = '/Population-WebMapping/assets/wa-covid-data-102521.geojson';
         const layerId = 'wa-covid-layer';
         const sourceId = 'wa-covid-data';
@@ -95,8 +98,8 @@
         // --- Utility to update data panel ---
         const countyNameElement = document.getElementById('county-name');
         const caseValueElement = document.getElementById('case-value');
-        const deathValueElement = document.getElementById('death-value'); // NEW element
-        const vaxValueElement = document.getElementById('vax-value');     // NEW element
+        const deathValueElement = document.getElementById('death-value'); 
+        const vaxValueElement = document.getElementById('vax-value');     
         let hoveredCountyId = null;
 
         /**
@@ -216,7 +219,7 @@
                     // Extract all three required data properties
                     const caseValue = feature.properties.casePer10k;
                     const deathValue = feature.properties.deathPer10k;
-                    const vaxValue = feature.properties.fullyVaxPer10k; // NEW PROPERTY
+                    const vaxValue = feature.properties.fullyVaxPer10k; 
 
                     // Only update if we've moved to a different feature
                     if (hoveredCountyId !== countyId) {
