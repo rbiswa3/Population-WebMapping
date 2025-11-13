@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -58,7 +59,7 @@
 
     <script type="module">
         // --- Mapbox Configuration ---
-        // Access Token: Replaced with your provided public token
+        // Your valid public token is used here
         mapboxgl.accessToken = 'pk.eyJ1IjoicmtiMjAwMyIsImEiOiJjbWhlYnRueGYwYzluMmxwdjducmcyNHEyIn0.1FtPN1VMfSJ5EHlF_UF26g';
 
         const map = new mapboxgl.Map({
@@ -70,7 +71,6 @@
         });
 
         // Data source path and properties
-        // Path is correct for GitHub Pages deployment
         const geoJsonPath = '/Population-WebMapping/assets/stateData.geojson'; 
         const layerId = 'pop-density-fill';
         const sourceId = 'us-states-data';
@@ -138,7 +138,10 @@
             // 1. Add the GeoJSON data source
             map.addSource(sourceId, {
                 type: 'geojson',
-                data: geoJsonPath
+                data: geoJsonPath,
+                // CRITICAL FIX: Tell Mapbox which property to use as the unique feature ID for state/feature state tracking.
+                // In your GeoJSON, the ID is stored in the 'id' field, which matches the feature ID.
+                promoteId: 'id' 
             });
 
             // 2. Add the choropleth fill layer
@@ -150,7 +153,8 @@
                     // Use 'step' expression to assign colors based on density
                     'fill-color': [
                         'step',
-                        ['get', dataProperty],
+                        // Use ['get', dataProperty] to correctly access the 'density' value
+                        ['get', dataProperty], 
                         colorStops[0][1], // Default color for < 50
                         colorStops[1][0], colorStops[1][1],
                         colorStops[2][0], colorStops[2][1],
@@ -193,7 +197,8 @@
             map.on('mousemove', layerId, (e) => {
                 if (e.features.length > 0) {
                     const feature = e.features[0];
-                    const stateId = feature.id;
+                    // Retrieve ID using feature.id now that we promoted it in the source config
+                    const stateId = feature.id; 
                     const stateName = feature.properties.name;
                     const densityValue = feature.properties[dataProperty];
 
