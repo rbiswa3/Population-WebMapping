@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -59,7 +58,8 @@
 
     <script type="module">
         // --- Mapbox Configuration ---
-        mapboxgl.accessToken = 'pk.eyJ1IjoiZ2VtaW5pLWxpYiIsImEiOiJjbHU0ZWh2MWExODhvMmtwYW5lZTRqZmxrIn0.sHw6xQ-mE0v7JbW091S5Sg';
+        // Access Token: Replaced with your provided public token
+        mapboxgl.accessToken = 'pk.eyJ1IjoicmtiMjAwMyIsImEiOiJjbWhlYnRueGYwYzluMmxwdjducmcyNHEyIn0.1FtPN1VMfSJ5EHlF_UF26g';
 
         const map = new mapboxgl.Map({
             container: 'map',
@@ -70,7 +70,7 @@
         });
 
         // Data source path and properties
-        // IMPORTANT: Using root-relative path for GitHub Pages deployment.
+        // Path is correct for GitHub Pages deployment
         const geoJsonPath = '/Population-WebMapping/assets/stateData.geojson'; 
         const layerId = 'pop-density-fill';
         const sourceId = 'us-states-data';
