@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -58,7 +59,6 @@
 
     <script type="module">
         // --- Mapbox Configuration ---
-        // REPLACE WITH YOUR ACTUAL Mapbox ACCESS TOKEN
         mapboxgl.accessToken = 'pk.eyJ1IjoiZ2VtaW5pLWxpYiIsImEiOiJjbHU0ZWh2MWExODhvMmtwYW5lZTRqZmxrIn0.sHw6xQ-mE0v7JbW091S5Sg';
 
         const map = new mapboxgl.Map({
@@ -70,10 +70,11 @@
         });
 
         // Data source path and properties
-        const geoJsonPath = 'assets/stateData.geojson';
+        // IMPORTANT: Using root-relative path for GitHub Pages deployment.
+        const geoJsonPath = '/Population-WebMapping/assets/stateData.geojson'; 
         const layerId = 'pop-density-fill';
         const sourceId = 'us-states-data';
-        const dataProperty = 'density'; // Corresponds to the property in stateData.geojson
+        const dataProperty = 'density'; 
 
         // Define the color stops for the choropleth map (People per square mile)
         const colorStops = [
@@ -97,6 +98,7 @@
          */
         function updateDataPanel(name, value) {
             stateNameElement.textContent = name;
+            // Display density value rounded to 1 decimal place
             densityValueElement.textContent = value !== null ? value.toFixed(1) : 'N/A';
         }
 
@@ -111,13 +113,10 @@
                 let label;
 
                 if (i === 0) {
-                    // For the first stop, label is "Less than next stop"
                     label = `Less than ${colorStops[i+1][0]}`;
                 } else if (i === colorStops.length - 1) {
-                    // For the last stop, label is "Value +"
                     label = `${value} +`;
                 } else {
-                    // For middle stops, label is "Value - (Next Value - 1)"
                     label = `${value} - ${colorStops[i+1][0] - 1}`;
                 }
 
@@ -194,8 +193,6 @@
             map.on('mousemove', layerId, (e) => {
                 if (e.features.length > 0) {
                     const feature = e.features[0];
-                    // IMPORTANT: The GeoJSON file should have a unique 'id' field for feature state management
-                    // In the stateData.geojson, the ID is available, so we use it.
                     const stateId = feature.id;
                     const stateName = feature.properties.name;
                     const densityValue = feature.properties[dataProperty];
