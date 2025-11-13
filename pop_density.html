@@ -57,7 +57,7 @@
         });
 
         // Correct GeoJSON path for GitHub Pages hosted under a repository name
-        const geoJsonPath = '/Population-WebMapping/assets/stateData.geojson';
+        const geoJsonPath = 'assets/stateData.geojson';
         const sourceId = 'us-states-data';
         const layerId = 'pop-density-fill';
         const dataProperty = 'density';
@@ -106,7 +106,7 @@
             map.addSource(sourceId,{
                 type:'geojson',
                 data: geoJsonPath, // Correct path
-                promoteId:'id'     // Use the 'id' field in GeoJSON for feature state tracking
+                //promoteId:'id'     // Use the 'id' field in GeoJSON for feature state tracking
             });
             
             // 2. Add Choropleth Fill Layer
@@ -144,12 +144,12 @@
             map.on('mousemove',layerId,e=>{
                 if(!e.features.length) return;
                 const f=e.features[0];
-                const stateId = f.id;
+                const stateId = f.properties.name;
                 
                 if(hovered !== stateId){
                     if(hovered !== null) map.setFeatureState({source:sourceId,id:hovered},{hover:false});
                     hovered = stateId;
-                    map.setFeatureState({source:sourceId,id:hovered},{hover:true});
+                    map.setFeatureState({source: sourceId, id: stateId}, {hover: true});
                     updatePanel(f.properties.name,f.properties[dataProperty]);
                     map.getCanvas().style.cursor = 'pointer';
                 }
